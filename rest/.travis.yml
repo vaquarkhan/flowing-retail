@@ -1,0 +1,54 @@
+language: java
+
+sudo: true
+
+script: 
+  - cd kafka/java
+  - mvn clean package
+  - cd ../..
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.m2
+jdk:
+  - openjdk11
+os:
+  - linux
+
+branches:
+  only:
+    - master
+
+after_success:
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker build -t flowingretail/kafka-java-checkout ./kafka/java/checkout/
+  - docker push flowingretail/kafka-java-checkout
+  - docker build -t flowingretail/kafka-java-order-camunda ./kafka/java/order-camunda/
+  - docker push flowingretail/kafka-java-order-camunda
+  - docker build -t flowingretail/kafka-java-order-zeebe ./kafka/java/order-zeebe/
+  - docker push flowingretail/kafka-java-order-zeebe
+  - docker build -t flowingretail/kafka-java-payment-camunda ./kafka/java/payment-camunda/
+  - docker push flowingretail/kafka-java-payment-camunda
+  - docker build -t flowingretail/kafka-java-payment ./kafka/java/payment/
+  - docker push flowingretail/kafka-java-payment
+  - docker build -t flowingretail/kafka-java-inventory ./kafka/java/inventory/
+  - docker push flowingretail/kafka-java-inventory
+  - docker build -t flowingretail/kafka-java-shipping ./kafka/java/shipping/
+  - docker push flowingretail/kafka-java-shipping
+  - docker build -t flowingretail/kafka-java-monitor ./kafka/java/monitor/
+  - docker push flowingretail/kafka-java-monitor
+  - docker build -t flowingretail/kafka-java-choreography-inventory ./kafka/java/choreography-alternative/inventory/
+  - docker push flowingretail/kafka-java-choreography-inventory
+  - docker build -t flowingretail/kafka-java-choreography-payment ./kafka/java/choreography-alternative/payment/
+  - docker push flowingretail/kafka-java-choreography-payment
+  - docker build -t flowingretail/kafka-java-choreography-shipping ./kafka/java/choreography-alternative/shipping/
+  - docker push flowingretail/kafka-java-choreography-shipping
+  - docker build -t flowingretail/kafka-java-choreography-zeebe-track ./kafka/java/choreography-alternative/zeebe-track/
+  - docker push flowingretail/kafka-java-choreography-zeebe-track
+  - docker build -t flowingretail/kafka-camunda-optimize-ingest ./kafka/java/camunda-optimize-ingest/
+  - docker push flowingretail/kafka-camunda-optimize-ingest
+  - docker build -t flowingretail/docs ./docs/
+  - docker push flowingretail/docs

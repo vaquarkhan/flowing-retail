@@ -1,0 +1,29 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>io.flowing.retail</groupId>
+	<artifactId>flowing-retail-kafka</artifactId>
+	<packaging>pom</packaging>
+	<version>0.0.1-SNAPSHOT</version>
+
+	<modules>
+		<module>checkout</module>
+		<module>order-camunda</module>
+		<module>order-zeebe</module>
+		<module>payment</module>
+		<module>payment-camunda</module>
+		<module>inventory</module>
+		<module>shipping</module>
+
+		<module>choreography-alternative</module>
+		<module>camunda-optimize-ingest</module>
+
+		<module>monitor</module>
+	</modules>
+
+	<build>
+		<defaultGoal>clean install</defaultGoal>		
+	</build>
+
+</project>

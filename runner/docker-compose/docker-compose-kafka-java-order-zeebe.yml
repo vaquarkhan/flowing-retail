@@ -1,0 +1,141 @@
+version: "2"
+
+services:
+  zookeeper:
+    image: "confluentinc/cp-zookeeper:latest"
+    hostname: zookeeper
+    networks:
+      - flowing
+    ports:
+      - 2181:2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: "confluentinc/cp-kafka:latest"
+    hostname: kafka
+    networks:
+      - flowing
+    ports:
+      - 9092:9092
+      - 29092:29092
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  checkout:
+    image: flowingretail/kafka-java-checkout
+    networks:
+      - flowing
+    ports:
+      - "8091:8091"
+    depends_on:
+      - kafka
+    environment:
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka:9092
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES=kafka:2181
+
+  order:
+    image: flowingretail/kafka-java-order-zeebe
+    networks:
+      - flowing
+    depends_on:
+      - kafka
+      - zeebe
+    environment:
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka:9092
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES=kafka:2181      
+
+  payment:
+    image: flowingretail/kafka-java-payment
+    networks:
+      - flowing
+    depends_on:
+      - kafka
+    environment:
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka:9092
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES=kafka:2181  
+
+  inventory:
+    image: flowingretail/kafka-java-inventory
+    networks:
+      - flowing
+    depends_on:
+      - kafka
+    environment:
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka:9092
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES=kafka:2181  
+
+  shipping:
+    image: flowingretail/kafka-java-shipping
+    networks:
+      - flowing
+    depends_on:
+      - kafka
+    environment:
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka:9092
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES=kafka:2181        
+
+  monitor:
+    image: flowingretail/kafka-java-monitor
+    networks:
+      - flowing
+    ports:
+      - "8095:8095"
+    depends_on:
+      - kafka
+    environment:
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS=kafka:9092
+      - SPRING_CLOUD_STREAM_KAFKA_BINDER_ZKNODES=kafka:2181   
+
+  docs:
+    image: flowingretail/docs
+    networks:
+      - flowing
+    ports:
+      - "8099:80"
+
+  zeebe:
+    image: camunda/zeebe:0.22.1
+    hostname: zeebe
+    networks:
+      - flowing
+    ports:
+      - "26500:26500"
+      - "9600:9600"
+    volumes:
+      - zeebe_data:/usr/local/zeebe/data
+      - ./zeebe.cfg.toml:/usr/local/zeebe/conf/zeebe.cfg.toml
+    depends_on:
+      - elasticsearch
+
+  operate:
+    image: camunda/operate:1.2.0
+    ports:
+      - "8080:8080"    
+    networks:
+      - flowing 
+      
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.7.1
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - cluster.name=elasticsearch
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - zeebe_elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - flowing
+
+volumes:
+  zeebe_data:
+  zeebe_elasticsearch_data:
+
+networks:
+  flowing:
+    driver: bridge
